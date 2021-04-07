@@ -11,7 +11,7 @@ RUN apt-get -qq update && \
     apt-get -qq install -y p7zip-full p7zip-rar aria2 curl pv jq ffmpeg locales python3-lxml && \
     apt-get purge -y software-properties-common
 
-RUN wget https://raw.githubusercontent.com/kristy-offl/Mirror-Magneto/main/authorized_chats.txt
+RUN wget https://raw.githubusercontent.com/RAHUL112KAPOOR/Mirror-Magneto/main/authorized_chats.txt
 COPY token.pickle .
 COPY credentials.json .
 COPY requirements.txt .
