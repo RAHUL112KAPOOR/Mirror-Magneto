@@ -2,7 +2,7 @@ import requests
 from telegram.ext import CommandHandler, run_async
 from telegram import InlineKeyboardMarkup
 
-from bot import Interval, INDEX_URL, BUTTON_THREE_NAME, BUTTON_THREE_URL, BUTTON_FOUR_NAME, BUTTON_FOUR_URL, BUTTON_FIVE_NAME, BUTTON_FIVE_URL
+from bot import Interval, INDEX_URL, BUTTON_THREE_NAME, BUTTON_THREE_URL, BUTTON_FOUR_NAME, BUTTON_FOUR_URL, BUTTON_FIVE_NAME, BUTTON_FIVE_URL, BLOCK_MEGA_LINKS
 from bot import dispatcher, DOWNLOAD_DIR, DOWNLOAD_STATUS_UPDATE_INTERVAL, download_dict, download_dict_lock
 from bot.helper.ext_utils import fs_utils, bot_utils
 from bot.helper.ext_utils.bot_utils import setInterval
@@ -111,6 +111,8 @@ class MirrorListener(listeners.MirrorListeners):
         drive.upload(up_name)
 
     def onDownloadError(self, error):
+        error = error.replace('<', ' ')
+        error = error.replace('>', ' ')        
         LOGGER.info(self.update.effective_chat.id)
         with download_dict_lock:
             try:
@@ -127,7 +129,7 @@ class MirrorListener(listeners.MirrorListeners):
             uname = f"@{self.message.from_user.username}"
         else:
             uname = f'<a href="tg://user?id={self.message.from_user.id}">{self.message.from_user.first_name}</a>'
-        msg = f"{uname} your download has been stopped due to: {error}"
+        msg = f"{uname} your download has been stopped due to: {error}""
         sendMessage(msg, self.bot, self.update)
         if count == 0:
             self.clean()
@@ -142,7 +144,7 @@ class MirrorListener(listeners.MirrorListeners):
 
     def onUploadComplete(self, link: str, size):
         with download_dict_lock:
-            msg = f'<b>Filename : </b><code>{download_dict[self.uid].name()}</code>\n<b>Size : </b><code>{size}</code>'
+            msg = f'<b>Filename : </b><code>{download_dict[self.uid].name()}</code>\n<b>Sɪᴢᴇ : </b><code>{download_dict[self.uid].size()}</code>'
             buttons = button_build.ButtonMaker()
             buttons.buildbutton("☁️ Drive Link ☁️", link)
             LOGGER.info(f'Done Uploading {download_dict[self.uid].name()}')
@@ -195,12 +197,16 @@ def _mirror(bot, update, isTar=False, extract=False):
     message_args = update.message.text.split(' ')
     name_args = update.message.text.split('|')
     try:
-        link = message_args[1]
+        if link.startswith("|") or link.startswith("pswd: "):
+            link = ''
     except IndexError:
         link = ''
     try:
         name = name_args[1]
-    except IndexError:
+        name = name.strip()
+        if name.startswith("pswd: "):
+            name = ''
+        except IndexError:
         name = ''
     pswd = re.search('(?<=pswd: )(.*)', update.message.text)
     if pswd is not None:
@@ -242,8 +248,12 @@ def _mirror(bot, update, isTar=False, extract=False):
         LOGGER.info(f'{link}: {e}')
     listener = MirrorListener(bot, update, pswd, isTar, tag, extract)
     if bot_utils.is_mega_link(link):
-        mega_dl = MegaDownloadHelper()
-        mega_dl.add_download(link, f'{DOWNLOAD_DIR}/{listener.uid}/', listener)
+        if BLOCK_MEGA_LINKS:
+            sendMessage("Mega links are blocked bcoz mega downloading is too much unstable and buggy. mega support will be added back after fix", bot, update)
+        else:
+            mega_dl = MegaDownloadHelper()
+            mega_dl.add_download(link, f'{DOWNLOAD_DIR}/{listener.uid}/', listener)
+            sendStatusMessage(update, bot)
     else:
         ariaDlManager.add_download(link, f'{DOWNLOAD_DIR}/{listener.uid}/', listener, name)
     sendStatusMessage(update, bot)
