@@ -208,7 +208,7 @@ def _mirror(bot, update, isTar=False, extract=False):
         name = name.strip()
         if name.startswith("pswd: "):
             name = ''
-        except IndexError:
+    except IndexError:
         name = ''
     pswd = re.search('(?<=pswd: )(.*)', update.message.text)
     if pswd is not None:
