@@ -148,12 +148,6 @@ class MirrorListener(listeners.MirrorListeners):
         with download_dict_lock:
             msg = f'<b>Filename : </b><code>{download_dict[self.uid].name()}</code>\n<b>Sɪᴢᴇ : </b><code>{download_dict[self.uid].size()}</code>'
             buttons = button_build.ButtonMaker()
-            if self.message.from_user.username:
-                uname = f"@{self.message.from_user.username}" # Username Looks Great!
-            else:
-                uname = f'<a href="tg://user?id={self.message.from_user.id}">{self.message.from_user.first_name}</a>' # HTML Format!
-            if uname is not None:
-                msg += f'\n\nUploaded by {uname}' # Done!
             if SHORTENER is not None and SHORTENER_API is not None:
                 surl = requests.get('https://{}/api?api={}&url={}&format=text'.format(SHORTENER, SHORTENER_API, link)).text
                 buttons.buildbutton("☁️ Drive Link ☁️", surl)
